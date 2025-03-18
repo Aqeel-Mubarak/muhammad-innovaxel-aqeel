@@ -1,10 +1,16 @@
 <script>
   import { onMount } from 'svelte';
+  import { writable } from 'svelte/store';
+
   let url = '';
   let shortUrl = '';
   let urls = [];
   let error = '';
-
+  let showModal = writable(false);
+  let updateShortCode = '';
+  let updateUrlInput = '';
+  let statsModel = writable(false);
+  let stats = {};
   const API_BASE = 'http://127.0.0.1:5000';
 
   // Fetch all shortened URLs 
@@ -53,15 +59,15 @@
   // Delete Short URL
   async function deleteUrl(shortCode) {
     try {
-    const response = await fetch(`${API_BASE}/shorten/${shortCode}`, {
-      method: 'DELETE'
-    });
+      const response = await fetch(`${API_BASE}/shorten/${shortCode}`, {
+        method: 'DELETE'
+      });
 
-    if (response.ok) {
-      fetchUrls(); // Refresh the list after deletion
-    } else {
-      console.error("Failed to delete URL");
-    }
+      if (response.ok) {
+        fetchUrls(); // Refresh the list after deletion
+      } else {
+        console.error("Failed to delete URL");
+      }
     } catch (err) {
       console.error("Error deleting URL:", err);
     }
@@ -69,12 +75,34 @@
 
   // Update Short URL
   async function updateUrl(shortCode) {
-    
+    updateShortCode = shortCode;
+    showModal.set(true);
   }
+
+  async function submitUpdateUrl() {
+    try {
+      const response = await fetch(`${API_BASE}/shorten/${updateShortCode}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: updateUrlInput })
+      });
+
+      if (response.ok) {
+        fetchUrls();
+        showModal.set(false);
+      } else {
+        console.error("Failed to update URL");
+      }
+    } catch (err) {
+      console.error("Error updating URL:", err);
+    }
+  }
+
+  
+
   // Fetch URLs on page load
   onMount(fetchUrls);
 </script>
-
 
 <h1>🔗 URL Shortener Service</h1>
 
@@ -99,7 +127,7 @@
     </tr>
   </thead>
   <tbody>
-    {#each urls as { shortCode}}
+    {#each urls as { shortCode }}
       <tr>
         <td>{shortCode}</td>
         <td>
@@ -112,6 +140,17 @@
     {/each}
   </tbody>
 </table>
+
+{#if $showModal}
+  <div class="modal">
+    <div class="modal-content">
+      <button class="close-btn" on:click={() => showModal.set(false)}>Close</button>
+      <h2>Update URL</h2>
+      <input type="text" bind:value={updateUrlInput} placeholder="Enter new URL..." />
+      <button on:click={submitUpdateUrl}>Submit</button>
+    </div>
+  </div>
+{/if}
 
 <style>
   table {
@@ -140,5 +179,27 @@
   input, button { margin: 10px; padding: 10px; font-size: 1rem; }
   .url-list { margin-top: 20px; }
   .short-url { color: blue; cursor: pointer; }
+  .modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  .modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+  }
+  .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+  }
 </style>
-
