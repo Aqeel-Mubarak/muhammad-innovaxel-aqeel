@@ -144,5 +144,25 @@ def delete_url(short_code):
 
     return '', 204
 
+# 5. Get URL Statistics
+@app.route('/shorten/<short_code>/stats', methods=['GET'])
+def get_url_stats(short_code):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM urls WHERE short_code = %s", (short_code,))
+    url_entry = cur.fetchone()
+
+    if not url_entry:
+        return jsonify({"error": "Short URL not found"}), 404
+
+    return jsonify({
+        "id": url_entry['id'],
+        "url": url_entry['url'],
+        "shortCode": url_entry['short_code'],
+        "createdAt": url_entry['created_at'].isoformat(),
+        "updatedAt": url_entry['updated_at'].isoformat(),
+        "accessCount": url_entry['access_count']
+    }), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)
