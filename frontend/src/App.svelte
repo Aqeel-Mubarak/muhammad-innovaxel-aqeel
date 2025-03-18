@@ -1,47 +1,122 @@
 <script>
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+  import { onMount } from 'svelte';
+  let url = '';
+  let shortUrl = '';
+  let urls = [];
+  let error = '';
+
+  const API_BASE = 'http://127.0.0.1:5000';
+
+  // Fetch all shortened URLs 
+  async function fetchUrls() {
+    try {
+      const res = await fetch(`${API_BASE}/shorten/all`);
+      urls = await res.json();
+    } catch (err) {
+      error = 'Failed to load URLs';
+    }
+  }
+
+  // Create a Short URL
+  async function shortenUrl() {
+    if (!url) {
+      error = 'Enter a valid URL!';
+      return;
+    }
+
+    const response = await fetch(`${API_BASE}/shorten`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      shortUrl = `${window.location.origin}/shorten/${data.shortCode}`;
+      fetchUrls();
+    } else {
+      error = 'Failed to create short URL!';
+    }
+  }
+
+  // Retrieve Original URL
+  async function getOriginalUrl(shortCode) {
+   alert("Original URL: " + shortCode);
+  }
+
+  // Delete Short URL
+  async function deleteUrl(shortCode) {
+    alert("Delete URL: " + shortCode);
+  }
+
+  // Fetch URLs on page load
+  onMount(fetchUrls);
 </script>
 
-<main>
-  <div>
-    <a href="https://vite.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
 
-  <div class="card">
-    <Counter />
-  </div>
+<h1>🔗 Svelte URL Shortener</h1>
 
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
+<input type="text" bind:value={url} placeholder="Enter URL..." />
+<button on:click={shortenUrl}>Shorten</button>
 
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
-</main>
+{#if shortUrl}
+  <p>Short URL: <a class="short-url" href={shortUrl} target="_blank">{shortUrl}</a></p>
+{/if}
+
+{#if error}
+  <p style="color: red;">{error}</p>
+{/if}
+
+<h2>📜 Shortened URLs</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Short Code</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {#each urls as { shortCode}}
+      <tr>
+        <td>{shortCode}</td>
+        <td>
+          <button on:click={() => getOriginalUrl(shortCode)}>🔗 Retrieve</button>
+          <button on:click={() => deleteUrl(shortCode)}>🗑️ Delete</button>
+          <button on:click={() => updateUrl(shortCode)}>✏️ Update</button>
+          <button on:click={() => viewStats(shortCode)}>📊 View Stats</button>
+        </td>
+      </tr>
+    {/each}
+  </tbody>
+</table>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
   }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
   }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
+  th {
+    background-color: #f4f4f4;
   }
-  .read-the-docs {
-    color: #888;
+  button {
+    margin: 2px;
+    padding: 5px 10px;
+    cursor: pointer;
   }
+  .short-url {
+    color: blue;
+    cursor: pointer;
+  }
+  body { font-family: Arial, sans-serif; text-align: center; }
+  input, button { margin: 10px; padding: 10px; font-size: 1rem; }
+  .url-list { margin-top: 20px; }
+  .short-url { color: blue; cursor: pointer; }
 </style>
+

@@ -163,6 +163,29 @@ def get_url_stats(short_code):
         "accessCount": url_entry['access_count']
     }), 200
 
+@app.route('/shorten/all', methods=['GET'])
+def get_all_short_urls():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, url, short_code, created_at, updated_at, access_count FROM urls")
+    urls = cur.fetchall()
+    cur.close()
+
+    if not urls:
+        return jsonify({"message": "No shortened URLs found"}), 404
+
+    url_list = [
+        {
+            "id": url['id'],
+            "url": url['url'],
+            "shortCode": url['short_code'],
+            "createdAt": url['created_at'].isoformat(),
+            "updatedAt": url['updated_at'].isoformat(),
+            "accessCount": url['access_count']
+        }
+        for url in urls
+    ]
+
+    return jsonify(url_list), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
