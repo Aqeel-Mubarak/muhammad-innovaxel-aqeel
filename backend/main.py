@@ -8,9 +8,14 @@ import string
 
 # Generate random short code
 def generate_unique_short_code():
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-
-        
+    while True:
+        short_code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT short_code FROM urls WHERE short_code = %s", (short_code,))
+        existing_code = cur.fetchone()
+        cur.close()
+        if not existing_code:
+            return short_code
 
 app = Flask(__name__)
 CORS(app)
