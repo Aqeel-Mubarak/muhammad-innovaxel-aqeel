@@ -41,7 +41,13 @@
 
   // Retrieve Original URL
   async function getOriginalUrl(shortCode) {
-   alert("Original URL: " + shortCode);
+    try {
+      const res = await fetch(`${API_BASE}/shorten/${shortCode}`);
+      const data = await res.json();
+      window.open(data.url, '_blank');
+    } catch (err) {
+      error = 'URL not found!';
+    }
   }
 
   // Delete Short URL
@@ -54,7 +60,7 @@
 </script>
 
 
-<h1>🔗 Svelte URL Shortener</h1>
+<h1>🔗 URL Shortener Service</h1>
 
 <input type="text" bind:value={url} placeholder="Enter URL..." />
 <button on:click={shortenUrl}>Shorten</button>
@@ -81,7 +87,7 @@
       <tr>
         <td>{shortCode}</td>
         <td>
-          <button on:click={() => getOriginalUrl(shortCode)}>🔗 Retrieve</button>
+          <button on:click={() => getOriginalUrl(shortCode)}>🔗 Retrieve Original URL</button>
           <button on:click={() => deleteUrl(shortCode)}>🗑️ Delete</button>
           <button on:click={() => updateUrl(shortCode)}>✏️ Update</button>
           <button on:click={() => viewStats(shortCode)}>📊 View Stats</button>
