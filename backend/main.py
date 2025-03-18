@@ -70,7 +70,7 @@ def get_original_url(short_code):
 
     if not url_entry:
         return jsonify({"error": "Short URL not found"}), 404
-    print(url_entry)
+
     # Extract fields safely
     url_data = {
         "id": url_entry['id'], 
@@ -86,6 +86,47 @@ def get_original_url(short_code):
     cur.close()
 
     return jsonify(url_data), 200
+
+# 3. Update existing short URL
+@app.route('/shorten/<short_code>', methods=['PUT'])
+def update_url(short_code):
+    data = request.json
+    new_url = data.get('url')
+
+    if not new_url:
+        return jsonify({"error": "URL is required"}), 400
+    if not new_url.startswith(("http://", "https://")):
+        return jsonify({"error": "Invalid URL format"}), 400
+
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, url, short_code, created_at FROM urls WHERE short_code = %s", (short_code,))
+    url_entry = cur.fetchone()  # Returns tuple or None
+
+    if url_entry is None:
+        return jsonify({"error": "Short URL not found"}), 404
+
+    # Extract values correctly from tuple
+    url_data = {
+        "id": url_entry['id'], 
+        "url": url_entry['url'],  
+        "shortCode": url_entry['short_code'],  
+        "createdAt": url_entry['created_at'].isoformat(),  
+    }
+
+    # Update the URL in DB
+    updated_at = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    cur.execute("UPDATE urls SET url = %s, updated_at = %s WHERE short_code = %s", (new_url, updated_at, url_data['shortCode']))    
+    mysql.connection.commit()
+    print(f"Rows affected: {cur.rowcount}")
+    cur.close()
+
+    return jsonify({
+        "id": url_data['id'],
+        "url": new_url,
+        "shortCode": url_data['shortCode'],
+        "createdAt": url_data['createdAt'],
+        "updatedAt": updated_at
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
