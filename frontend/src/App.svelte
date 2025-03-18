@@ -97,7 +97,18 @@
       console.error("Error updating URL:", err);
     }
   }
-
+  //view stats
+  async function viewStats(shortCode) {
+    try {
+      const res = await fetch(`${API_BASE}/shorten/${shortCode}/stats`);
+      if (res.ok) {
+        stats = await res.json();
+        statsModel.set(true);
+      }
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }
   
 
   // Fetch URLs on page load
@@ -151,7 +162,20 @@
     </div>
   </div>
 {/if}
-
+{#if $statsModel}
+  <div class="modal">
+    <div class="modal-content">
+      <h2>URL Statistics</h2>
+      <p><strong>ID:</strong> {stats.id}</p>
+      <p><strong>Original URL:</strong> <a href={stats.url} target="_blank">{stats.url}</a></p>
+      <p><strong>Short Code:</strong> {stats.shortCode}</p>
+      <p><strong>Created At:</strong> {stats.createdAt}</p>
+      <p><strong>Updated At:</strong> {stats.updatedAt}</p>
+      <p><strong>Access Count:</strong> {stats.accessCount}</p>
+      <button class="close-btn" on:click={() => statsModel.set(false)}>Close</button>
+  </div>
+  </div>
+{/if}
 <style>
   table {
     width: 100%;
