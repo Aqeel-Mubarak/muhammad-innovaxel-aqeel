@@ -26,7 +26,6 @@ mysql = MySQL(app)
 
 
 @app.route('/shorten', methods=['POST'])
-@app.route('/shorten', methods=['POST'])
 def shorten_url():
     data = request.json
     long_url = data.get('url')
@@ -59,6 +58,34 @@ def shorten_url():
         "createdAt": created_at,
         "updatedAt": updated_at
     }), 201
+
+
+# 2. Retrieve original URL
+@app.route('/shorten/<short_code>', methods=['GET'])
+def get_original_url(short_code):
+    cur = mysql.connection.cursor()
+    
+    cur.execute("SELECT id, url, short_code, created_at, updated_at FROM urls WHERE short_code = %s", (short_code,))
+    url_entry = cur.fetchone()
+
+    if not url_entry:
+        return jsonify({"error": "Short URL not found"}), 404
+    print(url_entry)
+    # Extract fields safely
+    url_data = {
+        "id": url_entry['id'], 
+        "url": url_entry['url'],  
+        "shortCode": url_entry['short_code'],  
+        "createdAt": url_entry['created_at'].isoformat(),  
+        "updatedAt": url_entry['updated_at'].isoformat()   
+    }
+
+    # Increment access count
+    cur.execute("UPDATE urls SET access_count = access_count + 1 WHERE short_code = %s", (short_code,))
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify(url_data), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
