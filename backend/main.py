@@ -128,5 +128,21 @@ def update_url(short_code):
         "updatedAt": updated_at
     }), 200
 
+# 4. Delete a short URL
+@app.route('/shorten/<short_code>', methods=['DELETE'])
+def delete_url(short_code):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM urls WHERE short_code = %s", (short_code,))
+    url_entry = cur.fetchone()
+
+    if not url_entry:
+        return jsonify({"error": "Short URL not found"}), 404
+
+    cur.execute("DELETE FROM urls WHERE short_code = %s", (short_code,))
+    mysql.connection.commit()
+    cur.close()
+
+    return '', 204
+
 if __name__ == '__main__':
     app.run(debug=True)
