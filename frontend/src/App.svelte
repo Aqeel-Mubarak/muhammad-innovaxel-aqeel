@@ -52,9 +52,25 @@
 
   // Delete Short URL
   async function deleteUrl(shortCode) {
-    alert("Delete URL: " + shortCode);
+    try {
+    const response = await fetch(`${API_BASE}/shorten/${shortCode}`, {
+      method: 'DELETE'
+    });
+
+    if (response.ok) {
+      fetchUrls(); // Refresh the list after deletion
+    } else {
+      console.error("Failed to delete URL");
+    }
+    } catch (err) {
+      console.error("Error deleting URL:", err);
+    }
   }
 
+  // Update Short URL
+  async function updateUrl(shortCode) {
+    
+  }
   // Fetch URLs on page load
   onMount(fetchUrls);
 </script>
